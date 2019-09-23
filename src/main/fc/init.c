@@ -162,6 +162,7 @@
 #include "flight/mixer.h"
 #include "flight/pid.h"
 #include "flight/servos.h"
+#include "flight/volume_limitation.h"
 
 #include "io/rcdevice_cam.h"
 
@@ -246,7 +247,7 @@ void init(void)
     HAL_Init();
 #endif
 
-#if defined(STM32F7)   
+#if defined(STM32F7)
     /* Enable I-Cache */
     if (INSTRUCTION_CACHE_ENABLE) {
         SCB_EnableICache();
@@ -679,6 +680,10 @@ void init(void)
     if (featureIsEnabled(FEATURE_GPS)) {
         gpsInit();
     }
+#endif
+
+#ifdef USE_VOLUME_LIMITATION
+    volLimitation_init();
 #endif
 
 #ifdef USE_LED_STRIP

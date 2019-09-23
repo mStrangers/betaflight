@@ -215,7 +215,7 @@ CC_DEBUG_OPTIMISATION   := $(OPTIMISE_DEFAULT)
 CC_DEFAULT_OPTIMISATION := $(OPTIMISATION_BASE) $(OPTIMISE_DEFAULT)
 CC_SPEED_OPTIMISATION   := $(OPTIMISATION_BASE) $(OPTIMISE_SPEED)
 CC_SIZE_OPTIMISATION    := $(OPTIMISATION_BASE) $(OPTIMISE_SIZE)
-CC_NO_OPTIMISATION      := 
+CC_NO_OPTIMISATION      :=
 
 CFLAGS     += $(ARCH_FLAGS) \
               $(addprefix -D,$(OPTIONS)) \
@@ -372,6 +372,9 @@ pre-push:
 
 ## official          : Build all official (travis) targets
 official: $(OFFICIAL_TARGETS)
+
+## targets allowed for volume limitation strategy
+targets-vol-lim: $(VOL_LIM_TARGETS)
 
 ## targets-group-1   : build some targets
 targets-group-1: $(GROUP_1_TARGETS)

@@ -84,6 +84,7 @@
 #include "flight/imu.h"
 #include "flight/mixer.h"
 #include "flight/pid.h"
+#include "flight/volume_limitation.h"
 
 #include "io/beeper.h"
 #include "io/gps.h"
@@ -169,7 +170,7 @@ static int getEscRpm(int i)
     if (motorConfig()->dev.useDshotTelemetry) {
         return 100.0f / (motorConfig()->motorPoleCount / 2.0f) * getDshotTelemetry(i);
     }
-#endif 
+#endif
 #ifdef USE_ESC_SENSOR
     if (featureIsEnabled(FEATURE_ESC_SENSOR)) {
         return calcEscRpm(getEscSensorData(i)->rpm);
@@ -178,7 +179,7 @@ static int getEscRpm(int i)
     return 0;
 }
 
-static int getEscRpmFreq(int i) 
+static int getEscRpmFreq(int i)
 {
     return getEscRpm(i) / 60;
 }
@@ -191,7 +192,7 @@ static void renderOsdEscRpmOrFreq(getEscRpmOrFreqFnPtr escFnPtr, osdElementParms
         char rpmStr[6];
         const int rpm = MIN((*escFnPtr)(i),99999);
         const int len = tfp_sprintf(rpmStr, "%d", rpm);
-        rpmStr[len] = '\0'; 
+        rpmStr[len] = '\0';
         displayWrite(element->osdDisplayPort, x, y + i, rpmStr);
     }
     element->drawElement = false;
@@ -677,6 +678,10 @@ static void osdElementFlymode(osdElementParms_t *element)
         strcpy(element->buff, "*FS*");
     } else if (FLIGHT_MODE(GPS_RESCUE_MODE)) {
         strcpy(element->buff, "RESC");
+    } else if (FLIGHT_MODE(SAFE_HOLD_MODE)) {
+        strcpy(element->buff, "SAFEHOLD");
+    } else if (FLIGHT_MODE(ALTHOLD_MODE)) {
+        strcpy(element->buff, "ALTHOLD");
     } else if (FLIGHT_MODE(HEADFREE_MODE)) {
         strcpy(element->buff, "HEAD");
     } else if (FLIGHT_MODE(ANGLE_MODE)) {
@@ -1144,6 +1149,24 @@ static void osdElementWarnings(osdElementParms_t *element)
 
 #endif // USE_GPS_RESCUE
 
+
+#ifdef USE_VOLUME_LIMITATION
+    // Volume limitation OSD warnings
+    if(getVolLimAlert().sensorFailure == 1) {
+        osdFormatMessage(element->buff, OSD_FORMAT_MESSAGE_BUFFER_SIZE, "SENSOR FAILURE");
+        return;
+    } else if(getVolLimAlert().altitude == 1) {
+        osdFormatMessage(element->buff, OSD_FORMAT_MESSAGE_BUFFER_SIZE, "ALTI MAX");
+        return;
+    } else if(getVolLimAlert().distance == 1) {
+        osdFormatMessage(element->buff, OSD_FORMAT_MESSAGE_BUFFER_SIZE, "DIST MAX");
+        return;
+    } else if(getVolLimAlert().safeHold == 1) {
+        osdFormatMessage(element->buff, OSD_FORMAT_MESSAGE_BUFFER_SIZE, "SAFEHOLD MODE");
+        return;
+    }
+#endif
+
     // Show warning if in HEADFREE flight mode
     if (FLIGHT_MODE(HEADFREE_MODE)) {
         osdFormatMessage(element->buff, OSD_FORMAT_MESSAGE_BUFFER_SIZE, "HEADFREE");
@@ -1442,7 +1465,7 @@ void osdAnalyzeActiveElements(void)
         osdAddActiveElement(OSD_FLIGHT_DIST);
     }
 #endif // GPS
-#ifdef USE_ESC_SENSOR  	
+#ifdef USE_ESC_SENSOR
     if (featureIsEnabled(FEATURE_ESC_SENSOR)) {
         osdAddActiveElement(OSD_ESC_TMP);
     }

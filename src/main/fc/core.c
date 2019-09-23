@@ -94,6 +94,7 @@
 #include "flight/pid.h"
 #include "flight/servos.h"
 #include "flight/gps_rescue.h"
+#include "flight/volume_limitation.h"
 
 
 // June 2013     V2.2-dev
@@ -290,6 +291,15 @@ void updateArmingStatus(void)
             } else {
                 unsetArmingDisabled(ARMING_DISABLED_RESC);
             }
+        }
+#endif
+
+#ifdef USE_VOLUME_LIMITATION
+        // Arming is forbidden before GPS FIX
+        if ((STATE(GPS_FIX) || ARMING_FLAG(WAS_EVER_ARMED)) || !gpsNeededForVolLim()) {
+            unsetArmingDisabled(ARMING_DISABLED_GPS);
+        } else {
+            setArmingDisabled(ARMING_DISABLED_GPS);
         }
 #endif
 
@@ -612,7 +622,7 @@ int8_t calculateThrottlePercent(void)
     if (featureIsEnabled(FEATURE_3D)
         && !IS_RC_MODE_ACTIVE(BOX3D)
         && !flight3DConfig()->switched_mode3d) {
-        
+
         if (channelData > (rxConfig()->midrc + flight3DConfig()->deadband3d_throttle)) {
             ret = ((channelData - rxConfig()->midrc - flight3DConfig()->deadband3d_throttle) * 100) / (PWM_RANGE_MAX - rxConfig()->midrc - flight3DConfig()->deadband3d_throttle);
         } else if (channelData < (rxConfig()->midrc - flight3DConfig()->deadband3d_throttle)) {
@@ -673,7 +683,7 @@ bool processRx(timeUs_t currentTimeUs)
 
     const throttleStatus_e throttleStatus = calculateThrottleStatus();
     const uint8_t throttlePercent = calculateThrottlePercentAbs();
-    
+
     const bool launchControlActive = isLaunchControlActive();
 
     if (airmodeIsEnabled() && ARMING_FLAG(ARMED) && !launchControlActive) {
@@ -876,6 +886,50 @@ bool processRx(timeUs_t currentTimeUs)
         DISABLE_FLIGHT_MODE(HORIZON_MODE);
     }
 
+#ifdef USE_VOLUME_LIMITATION
+    if (volLimitation_DistanceLimStatus() && sensors(SENSOR_ACC) && volLimSanityCheck()) {
+        // bumpless transfer to Level mode
+        canUseHorizonMode = false;
+        if (!FLIGHT_MODE(ANGLE_MODE)) {
+            ENABLE_FLIGHT_MODE(ANGLE_MODE);
+        }
+        // Transition to SAFE HOLD mode
+        if (!FLIGHT_MODE(SAFE_HOLD_MODE)) {
+            ENABLE_FLIGHT_MODE(SAFE_HOLD_MODE);
+        }
+        // Transition to HOLD mode
+        if (!FLIGHT_MODE(ALTHOLD_MODE)) {
+            ENABLE_FLIGHT_MODE(ALTHOLD_MODE);
+        }
+    } else if (sensors(SENSOR_ACC) && volLimSanityCheck()) {
+        if (IS_RC_MODE_ACTIVE(BOXSAFEHOLD)) {
+            if (!FLIGHT_MODE(SAFE_HOLD_MODE)) {
+                // Transition to HOLD mode
+                ENABLE_FLIGHT_MODE(SAFE_HOLD_MODE);
+            }
+        } else {
+            if (FLIGHT_MODE(SAFE_HOLD_MODE)) {
+                // Transition from HOLD mode
+                DISABLE_FLIGHT_MODE(SAFE_HOLD_MODE);
+            }
+        }
+        if (IS_RC_MODE_ACTIVE(BOXALTHOLD)) {
+          if (!FLIGHT_MODE(ALTHOLD_MODE)) {
+              // Transition to HOLD mode
+              ENABLE_FLIGHT_MODE(ALTHOLD_MODE);
+          }
+        } else {
+            if (FLIGHT_MODE(ALTHOLD_MODE)) {
+                // Transition from HOLD mode
+                DISABLE_FLIGHT_MODE(ALTHOLD_MODE);
+            }
+        }
+    } else {
+        DISABLE_FLIGHT_MODE(SAFE_HOLD_MODE);
+        DISABLE_FLIGHT_MODE(ALTHOLD_MODE);
+    }
+#endif
+
 #ifdef USE_GPS_RESCUE
     if (ARMING_FLAG(ARMED) && (IS_RC_MODE_ACTIVE(BOXGPSRESCUE) || (failsafeIsActive() && failsafeConfig()->failsafe_procedure == FAILSAFE_PROCEDURE_GPS_RESCUE))) {
         if (!FLIGHT_MODE(GPS_RESCUE_MODE)) {
@@ -973,7 +1027,7 @@ bool processRx(timeUs_t currentTimeUs)
 #endif
 
     pidSetAntiGravityState(IS_RC_MODE_ACTIVE(BOXANTIGRAVITY) || featureIsEnabled(FEATURE_ANTI_GRAVITY));
-    
+
     return true;
 }
 

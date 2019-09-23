@@ -88,6 +88,7 @@ COMMON_SRC = \
             flight/pid.c \
             flight/servos.c \
             flight/servos_tricopter.c \
+			flight/volume_limitation.c \
             io/serial_4way.c \
             io/serial_4way_avrootloader.c \
             io/serial_4way_stk500v2.c \

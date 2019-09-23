@@ -125,6 +125,7 @@ extern char gpsPacketLog[GPS_PACKET_LOG_ENTRY_COUNT];
 
 extern int32_t GPS_home[2];
 extern uint16_t GPS_distanceToHome;        // distance to home point in meters
+extern uint32_t GPS_distanceToHomeCM;      // distance to home point in cm
 extern int16_t GPS_directionToHome;        // direction to home or hol point in degrees
 extern uint32_t GPS_distanceFlownInCm;     // distance flown since armed in centimeters
 extern int16_t GPS_verticalSpeedInCmS;     // vertical speed in cm/s
@@ -170,4 +171,3 @@ void onGpsNewData(void);
 void GPS_reset_home_position(void);
 void GPS_calc_longitude_scaling(int32_t lat);
 void GPS_distance_cm_bearing(int32_t *currentLat1, int32_t *currentLon1, int32_t *destinationLat2, int32_t *destinationLon2, uint32_t *dist, int32_t *bearing);
-

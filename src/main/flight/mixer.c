@@ -58,6 +58,7 @@
 #include "flight/mixer.h"
 #include "flight/mixer_tricopter.h"
 #include "flight/pid.h"
+#include "flight/volume_limitation.h"
 
 #include "rx/rx.h"
 
@@ -713,14 +714,14 @@ static void applyFlipOverAfterCrashModeToMotors(void)
                 signPitch*currentMixer[i].pitch +
                 signRoll*currentMixer[i].roll +
                 signYaw*currentMixer[i].yaw;
-                
+
             if (motorOutputNormalised < 0) {
                 if (mixerConfig()->crashflip_motor_percent > 0) {
                     motorOutputNormalised = -motorOutputNormalised * (float)mixerConfig()->crashflip_motor_percent / 100.0f;
                 } else {
                     motorOutputNormalised = 0;
                 }
-            } 
+            }
             motorOutputNormalised = MIN(1.0f, flipPower * motorOutputNormalised);
             float motorOutput = motorOutputMin + motorOutputNormalised * motorOutputRange;
 
@@ -833,7 +834,7 @@ FAST_CODE_NOINLINE void mixTable(timeUs_t currentTimeUs, uint8_t vbatPidCompensa
         activeMixer = &launchControlMixer[0];
     }
 #endif
-    
+
     // Calculate and Limit the PID sum
     const float scaledAxisPidRoll =
         constrainf(pidData[FD_ROLL].Sum, -currentPidProfile->pidSumLimit, currentPidProfile->pidSumLimit) / PID_MIXER_SCALING;
@@ -870,7 +871,7 @@ FAST_CODE_NOINLINE void mixTable(timeUs_t currentTimeUs, uint8_t vbatPidCompensa
     // 50% throttle provides the maximum authority for yaw recovery when airmode is not active.
     // When airmode is active the throttle setting doesn't impact recovery authority.
     if (yawSpinDetected && !airmodeEnabled) {
-        throttle = 0.5f;   // 
+        throttle = 0.5f;   //
     }
 #endif // USE_YAW_SPIN_RECOVERY
 
@@ -934,6 +935,18 @@ FAST_CODE_NOINLINE void mixTable(timeUs_t currentTimeUs, uint8_t vbatPidCompensa
     float airmodeThrottleChange = 0;
 #endif
     loggingThrottle = throttle;
+
+#if defined(USE_VOLUME_LIMITATION) && defined(USE_GPS)
+    // Altitude limitation
+    throttle = volLimitation_AltitudeLim(throttle);
+    /************ ALTHOLD MODE activation ***************/
+    if (FLIGHT_MODE(ALTHOLD_MODE)) {
+        throttle = volLimitation_AltitudeHold(1);
+    } else {
+        volLimitation_AltitudeHold(0);
+    }
+    /****************************************************/
+#endif
 
     motorMixRange = motorMixMax - motorMixMin;
     if (motorMixRange > 1.0f) {

@@ -45,6 +45,7 @@
 #include "flight/imu.h"
 #include "flight/gps_rescue.h"
 #include "flight/pid.h"
+#include "flight/volume_limitation.h"
 #include "pg/rx.h"
 #include "rx/rx.h"
 
@@ -151,13 +152,23 @@ float applyRaceFlightRates(const int axis, float rcCommandf, const float rcComma
 static void calculateSetpointRate(int axis)
 {
     float angleRate;
-    
+
 #ifdef USE_GPS_RESCUE
     if ((axis == FD_YAW) && FLIGHT_MODE(GPS_RESCUE_MODE)) {
         // If GPS Rescue is active then override the setpointRate used in the
         // pid controller with the value calculated from the desired heading logic.
         angleRate = gpsRescueGetYawRate();
 
+        // Treat the stick input as centered to avoid any stick deflection base modifications (like acceleration limit)
+        rcDeflection[axis] = 0;
+        rcDeflectionAbs[axis] = 0;
+    } else
+#endif
+#ifdef USE_VOLUME_LIMITATION
+    if ((axis == FD_YAW) && FLIGHT_MODE(SAFE_HOLD_MODE)) {
+        // If GPS Rescue is active then override the setpointRate used in the
+        // pid controller with the value calculated from the desired heading logic.
+        angleRate = gpsHoldGetYawRate();
         // Treat the stick input as centered to avoid any stick deflection base modifications (like acceleration limit)
         rcDeflection[axis] = 0;
         rcDeflectionAbs[axis] = 0;
@@ -315,7 +326,7 @@ FAST_CODE_NOINLINE void rcSmoothingSetFilterCutoffs(rcSmoothingFilter_t *smoothi
 {
     const float dT = targetPidLooptime * 1e-6f;
     uint16_t oldCutoff = smoothingData->inputCutoffFrequency;
-    
+
     if (rxConfig()->rc_smoothing_input_cutoff == 0) {
         smoothingData->inputCutoffFrequency = calcRcSmoothingCutoff(smoothingData->averageFrameTimeUs, (rxConfig()->rc_smoothing_input_type == RC_SMOOTHING_INPUT_PT1));
     }
@@ -325,7 +336,7 @@ FAST_CODE_NOINLINE void rcSmoothingSetFilterCutoffs(rcSmoothingFilter_t *smoothi
         for (int i = 0; i < PRIMARY_CHANNEL_COUNT; i++) {
             if ((1 << i) & interpolationChannels) {  // only update channels specified by rc_interp_ch
                 switch (rxConfig()->rc_smoothing_input_type) {
-                
+
                     case RC_SMOOTHING_INPUT_PT1:
                         if (!smoothingData->filterInitialized) {
                             pt1FilterInit((pt1Filter_t*) &smoothingData->filter[i], pt1FilterGain(smoothingData->inputCutoffFrequency, dT));
@@ -333,7 +344,7 @@ FAST_CODE_NOINLINE void rcSmoothingSetFilterCutoffs(rcSmoothingFilter_t *smoothi
                             pt1FilterUpdateCutoff((pt1Filter_t*) &smoothingData->filter[i], pt1FilterGain(smoothingData->inputCutoffFrequency, dT));
                         }
                         break;
-                        
+
                     case RC_SMOOTHING_INPUT_BIQUAD:
                     default:
                         if (!smoothingData->filterInitialized) {
@@ -389,7 +400,7 @@ FAST_CODE bool rcSmoothingAccumulateSample(rcSmoothingFilter_t *smoothingData, i
 }
 
 // Determine if we need to caclulate filter cutoffs. If not then we can avoid
-// examining the rx frame times completely 
+// examining the rx frame times completely
 FAST_CODE_NOINLINE bool rcSmoothingAutoCalculate(void)
 {
     bool ret = false;
@@ -422,13 +433,13 @@ FAST_CODE uint8_t processRcSmoothingFilter(void)
         rcSmoothingData.filterInitialized = false;
         rcSmoothingData.averageFrameTimeUs = 0;
         rcSmoothingResetAccumulation(&rcSmoothingData);
-        
+
         rcSmoothingData.inputCutoffFrequency = rxConfig()->rc_smoothing_input_cutoff;
-        
+
         if (rxConfig()->rc_smoothing_derivative_type != RC_SMOOTHING_DERIVATIVE_OFF) {
             rcSmoothingData.derivativeCutoffFrequency = rxConfig()->rc_smoothing_derivative_cutoff;
         }
-        
+
         calculateCutoffs = rcSmoothingAutoCalculate();
 
         // if we don't need to calculate cutoffs dynamically then the filters can be initialized now
