@@ -529,7 +529,7 @@ static bool updateHoldRollPitchAngle(int32_t heading, int32_t safeDirection)
 
 bool volLimSanityCheck(void)
 {
-    if (!gpsIsHealthy() || !STATE(GPS_FIX) || !compassIsHealthy()) {
+    if (!gpsIsHealthy() || !STATE(GPS_FIX) || !compassIsHealthy() || !isBaroReady()) {
         volLimData.alert.sensorFailure = 1;
         return false;
     } else {

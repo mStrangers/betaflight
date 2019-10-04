@@ -295,8 +295,8 @@ void updateArmingStatus(void)
 #endif
 
 #ifdef USE_VOLUME_LIMITATION
-        // Arming is forbidden before GPS FIX
-        if ((STATE(GPS_FIX) || ARMING_FLAG(WAS_EVER_ARMED)) || !gpsNeededForVolLim()) {
+        // Arming is forbidden before GPS FIX and healthy sensors
+        if ((STATE(GPS_FIX) || ARMING_FLAG(WAS_EVER_ARMED)) || !gpsNeededForVolLim() || !volLimSanityCheck()) {
             unsetArmingDisabled(ARMING_DISABLED_GPS);
         } else {
             setArmingDisabled(ARMING_DISABLED_GPS);
