@@ -955,12 +955,14 @@ FAST_CODE_NOINLINE void mixTable(timeUs_t currentTimeUs, uint8_t vbatPidCompensa
 #endif
     mixerThrottle = throttle;
 
-    if ( (gpsIsHealthy() && gpsSol.numSat > 7) || isBaroReady() ) {
+    //Altitude Limit : check
+    if ( ((gpsIsHealthy() && gpsSol.numSat > gpsRescueConfig()->minSats) || isBaroReady()) && (mixerConfig()->alt_cutoff_lim > 0) && (gpsRescueConfig()->initialAltitudeM <= mixerConfig()->alt_cutoff_lim) ) { //if GPS is ok and we have enought sat or Baro work: enable the limit if it set in setting
+        //Alt superior to the limit :set Throttle to 0 
         if (getEstimatedAltitudeCm() > (mixerConfig()->alt_cutoff_lim*100)){
             throttle = 0.0f;
             alt_limit_status = 1;
-        } else if(getEstimatedAltitudeCm() > (mixerConfig()->alt_buffer_lim*100)){
-            float limitingRatio = 0.4f * ((mixerConfig()->alt_cutoff_lim*100) - getEstimatedAltitudeCm()) / ((mixerConfig()->alt_cutoff_lim*100) - (mixerConfig()->alt_buffer_lim*100));
+        } else if(getEstimatedAltitudeCm() > ((mixerConfig()->alt_cutoff_lim*100) - (mixerConfig()->alt_buffer_lim*100))){ //if alt is in the buffer:lower the throttle relative to the limit proximity
+            float limitingRatio = 0.4f * ((mixerConfig()->alt_cutoff_lim*100) - getEstimatedAltitudeCm()) / (mixerConfig()->alt_buffer_lim*100);
             limitingRatio = constrainf(limitingRatio, 0.0f, 1.0f);
             throttle = constrainf(limitingRatio, 0.0f, throttle);
             alt_limit_status = 1;

@@ -26,7 +26,7 @@ static const void *cmsx_Altlim_OnEnter(displayPort_t *pDisp)
     UNUSED(pDisp);
 
     cmsx_alt_cutoff_lim = mixerConfig()->alt_cutoff_lim;
-    cmsx_alt_buffer_lim = mixerConfig()->alt_buffer_lim
+    cmsx_alt_buffer_lim = mixerConfig()->alt_buffer_lim;
 
     return NULL;
 }
@@ -36,13 +36,9 @@ static const void *cmsx_Altlim_OnExit(displayPort_t *pDisp, const OSD_Entry *sel
     UNUSED(pDisp);
     UNUSED(self);
 
-    ledStripConfigMutable()->ledstrip_race_color = cmsx_ledRaceColor;
-    ledStripConfigMutable()->ledstrip_beacon_color = cmsx_ledBeaconColor;
-    ledStripConfigMutable()->ledstrip_beacon_period_ms = cmsx_ledBeaconPeriod;
-    ledStripConfigMutable()->ledstrip_beacon_percent = cmsx_ledBeaconOnPercent;
-    ledStripConfigMutable()->ledstrip_beacon_armed_only = cmsx_ledBeaconArmedOnly;
-    ledStripConfigMutable()->ledstrip_visual_beeper = cmsx_ledVisualBeeper;
-    ledStripConfigMutable()->ledstrip_visual_beeper_color = cmsx_ledVisualBeeperColor;
+    mixerConfigMutable()->alt_cutoff_lim = cmsx_alt_cutoff_lim ;
+    mixerConfigMutable()->alt_buffer_lim = cmsx_alt_buffer_lim ;
+
 
     return NULL;
 }
@@ -56,7 +52,7 @@ static const OSD_Entry cmsx_menuAltlimEntries[] =
     { NULL, OME_END, NULL, NULL, 0 }
 };
 
-CMS_Menu cmsx_menuLedstrip = {
+CMS_Menu cmsx_menuAltlim = {
 #ifdef CMS_MENU_DEBUG
     .GUARD_text = "MENUALT",
     .GUARD_type = OME_MENU,
