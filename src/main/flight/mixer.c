@@ -965,7 +965,7 @@ FAST_CODE_NOINLINE void mixTable(timeUs_t currentTimeUs, uint8_t vbatPidCompensa
             float limitingRatio = 0.4f * ((mixerConfig()->alt_cutoff_lim*100) - getEstimatedAltitudeCm()) / (mixerConfig()->alt_buffer_lim*100);
             limitingRatio = constrainf(limitingRatio, 0.0f, 1.0f);
             throttle = constrainf(limitingRatio, 0.0f, throttle);
-            alt_limit_status = 1;
+            alt_limit_status = 3;
         } else {
             alt_limit_status = 0;
         }
