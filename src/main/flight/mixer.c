@@ -79,7 +79,7 @@ PG_RESET_TEMPLATE(mixerConfig_t, mixerConfig,
     .crashflip_motor_percent = 0,
     .crashflip_expo = 35,
     .alt_cutoff_lim = 50,
-    .alt_buffer_lim = 40
+    .alt_buffer_lim = 10
 );
 
 PG_REGISTER_ARRAY(motorMixer_t, MAX_SUPPORTED_MOTORS, customMotorMixer, PG_MOTOR_MIXER, 0);
