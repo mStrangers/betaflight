@@ -1309,6 +1309,21 @@ static void osdElementWarnings(osdElementParms_t *element)
         }
     }
 
+    // Show warning if no altitude limitation applicable
+    if (getThrottleLimitationStatus() == 3) {
+         tfp_sprintf(element->buff, "THROTTLE LIM");
+        SET_BLINK(OSD_WARNINGS);
+        return;
+    } else if (getThrottleLimitationStatus() == 2) {
+        tfp_sprintf(element->buff, "NO ALTI LIM");
+        SET_BLINK(OSD_WARNINGS);
+        return;
+    } else if(getThrottleLimitationStatus() == 1) {
+        tfp_sprintf(element->buff, "ALTI LIM");
+        SET_BLINK(OSD_WARNINGS);
+        return;
+    }
+
 #ifdef USE_DSHOT
     if (isTryingToArm() && !ARMING_FLAG(ARMED)) {
         int armingDelayTime = (getLastDshotBeaconCommandTimeUs() + DSHOT_BEACON_GUARD_DELAY_US - currentTimeUs) / 1e5;
