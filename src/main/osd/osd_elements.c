@@ -1322,6 +1322,10 @@ static void osdElementWarnings(osdElementParms_t *element)
         tfp_sprintf(element->buff, "ALTI LIM");
         SET_BLINK(OSD_WARNINGS);
         return;
+    } else if(getThrottleLimitationStatus() == 4) {
+        tfp_sprintf(element->buff, "ALTI CONF");
+        SET_BLINK(OSD_WARNINGS);
+        return;
     }
 
 #ifdef USE_DSHOT

@@ -956,7 +956,9 @@ FAST_CODE_NOINLINE void mixTable(timeUs_t currentTimeUs, uint8_t vbatPidCompensa
     mixerThrottle = throttle;
 
     //Altitude Limit : check
-    if ( ((gpsIsHealthy() && gpsSol.numSat > gpsRescueConfig()->minSats) || isBaroReady()) && (mixerConfig()->alt_cutoff_lim > 0) && (gpsRescueConfig()->initialAltitudeM <= mixerConfig()->alt_cutoff_lim) ) { //if GPS is ok and we have enought sat or Baro work: enable the limit if it set in setting
+    //if GPS is ok and we have enought sat or Baro work: enable the limit if it set in setting
+    if ( ((gpsIsHealthy() && gpsSol.numSat > gpsRescueConfig()->minSats) || isBaroReady()) && (mixerConfig()->alt_cutoff_lim > 0) && (gpsRescueConfig()->initialAltitudeM <= mixerConfig()->alt_cutoff_lim) ) { 
+        
         //Alt superior to the limit :set Throttle to 0
         if (getEstimatedAltitudeCm() > (mixerConfig()->alt_cutoff_lim*100)){
             throttle = 0.0f;
@@ -970,7 +972,11 @@ FAST_CODE_NOINLINE void mixTable(timeUs_t currentTimeUs, uint8_t vbatPidCompensa
             alt_limit_status = 0;
         }
     } else {
-        alt_limit_status = 2;
+        if (gpsRescueConfig()->initialAltitudeM <= mixerConfig()->alt_cutoff_lim) {
+            alt_limit_status = 4;
+        } else {
+            alt_limit_status = 2;
+        }
     }
 
     motorMixRange = motorMixMax - motorMixMin;
