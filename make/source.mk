@@ -134,6 +134,7 @@ COMMON_SRC = \
             blackbox/blackbox_encoding.c \
             blackbox/blackbox_io.c \
             cms/cms.c \
+            cms/cms_menu_altlim.c \
             cms/cms_menu_blackbox.c \
             cms/cms_menu_failsafe.c \
             cms/cms_menu_firmware.c \
@@ -323,6 +324,7 @@ SIZE_OPTIMISED_SRC := $(SIZE_OPTIMISED_SRC) \
             io/usb_cdc_hid.c \
             msp/msp_serial.c \
             cms/cms.c \
+            cms/cms_menu_altlim.c \
             cms/cms_menu_blackbox.c \
             cms/cms_menu_failsafe.c \
             cms/cms_menu_firmware.c \
