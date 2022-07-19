@@ -338,6 +338,9 @@ void pgResetFn_osdConfig(osdConfig_t *osdConfig)
 
     osdConfig->camera_frame_width = 24;
     osdConfig->camera_frame_height = 11;
+
+    // Turn off replacing craft name for DJI OSD
+    osdWarnSetState(OSD_WARNING_DJI, false);
 }
 
 void pgResetFn_osdElementConfig(osdElementConfig_t *osdElementConfig)
@@ -1055,6 +1058,11 @@ void osdUpdate(timeUs_t currentTimeUs)
 void osdSuppressStats(bool flag)
 {
     suppressStatsDisplay = flag;
+}
+
+bool osdWarnDjiEnabled(void)
+{
+    return osdWarnGetState(OSD_WARNING_DJI);
 }
 
 #ifdef USE_OSD_PROFILES
