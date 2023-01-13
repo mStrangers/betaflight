@@ -51,6 +51,9 @@ PG_RESET_TEMPLATE(mixerConfig_t, mixerConfig,
     .yaw_motors_reversed = false,
     .crashflip_motor_percent = 0,
     .crashflip_expo = 35,
+    //Alti_Limit
+    .alt_cutoff_lim = 50,
+    .alt_buffer_lim = 10,
     .mixer_type = MIXER_LEGACY,
 );
 

@@ -90,6 +90,8 @@ typedef struct mixerConfig_s {
     uint8_t crashflip_motor_percent;
     uint8_t crashflip_expo;
     uint8_t mixer_type;
+    uint16_t alt_cutoff_lim;
+    uint16_t alt_buffer_lim;
 } mixerConfig_t;
 
 PG_DECLARE(mixerConfig_t, mixerConfig);
@@ -125,3 +127,11 @@ bool isFixedWing(void);
 
 float getMotorOutputLow(void);
 float getMotorOutputHigh(void);
+
+//Alti_Limit
+uint8_t getThrottleLimitationStatus(void);
+#define ALT_LIMIT_DISABLE 0 
+#define ALT_LIMIT_LIMIT 1
+#define ALT_LIMIT_SANITY 2
+#define ALT_LIMIT_BUFFER 3
+#define ALT_LIMIT_SETUP 4
