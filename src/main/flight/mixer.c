@@ -51,16 +51,16 @@
 #include "flight/mixer_init.h"
 #include "flight/mixer_tricopter.h"
 #include "flight/pid.h"
-#include "flight/position.h" //Alti_Limit
+#include "flight/position.h" //Alti_Limit : needed by getEstimatedAltitudeCm
 #include "flight/rpm_filter.h"
 
-#include "io/gps.h" //Alti_Limit 
+#include "io/gps.h" //Alti_Limit : needed by gpsIsHealthy and gpsSol
 
 #include "pg/rx.h"
 
 #include "rx/rx.h"
 
-#include "sensors/barometer.h" //Alti_Limit
+#include "sensors/barometer.h" //Alti_Limit : needed by isBaroReady
 #include "sensors/battery.h"
 #include "sensors/gyro.h"
 
@@ -419,8 +419,8 @@ static float applyAltiLimit(float throttle)
                 throttle = constrainf(limitingRatio , 0.0f, throttle );
                 alt_limit_status = ALT_LIMIT_BUFFER;
             } else {
-                alt_limit_status = ALT_LIMIT_DISABLE ; 
-            }
+                alt_limit_status = ALT_LIMIT_ENABLE ; 
+            } 
         } else {
             alt_limit_status = ALT_LIMIT_SETUP ;
         }
@@ -576,7 +576,9 @@ FAST_CODE_NOINLINE void mixTable(timeUs_t currentTimeUs)
     //Alti_Limit code here call function static float applyAltiLimit(float throttle) need to be created outside of the noinline fuction to test
     if (mixerConfig()->alt_cutoff_lim > 0) {
         throttle = applyAltiLimit(throttle);
-    }
+    } else {
+        alt_limit_status = ALT_LIMIT_DISABLE ; 
+    } 
     
     // send throttle value to blackbox, including scaling and throttle boost, but not TL compensation, dyn idle or airmode 
     mixerThrottle = throttle;

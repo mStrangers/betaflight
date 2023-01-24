@@ -131,7 +131,8 @@ float getMotorOutputHigh(void);
 //Alti_Limit
 uint8_t getThrottleLimitationStatus(void);
 #define ALT_LIMIT_DISABLE 0 
-#define ALT_LIMIT_LIMIT 1
-#define ALT_LIMIT_SANITY 2
-#define ALT_LIMIT_BUFFER 3
-#define ALT_LIMIT_SETUP 4
+#define ALT_LIMIT_ENABLE 1
+#define ALT_LIMIT_LIMIT 2
+#define ALT_LIMIT_SANITY 3
+#define ALT_LIMIT_BUFFER 4
+#define ALT_LIMIT_SETUP 5

@@ -342,6 +342,35 @@ void renderOsdWarning(char *warningText, bool *blinking, uint8_t *displayAttr)
         osdSetVisualBeeperState(false);
         return;
     }
+    
+    //show altitude limit state
+    if ( getThrottleLimitationStatus() == 0 ) {
+        tfp_sprintf(warningText, "ALTI_DISABLE");
+        *displayAttr = DISPLAYPORT_ATTR_WARNING;
+        *blinking = true;;
+    }
+    if ( getThrottleLimitationStatus() == 2 ) {
+       tfp_sprintf(warningText, "ALTI_LIMIT");
+       *displayAttr = DISPLAYPORT_ATTR_WARNING;
+       *blinking = true;;
+    }
+    if ( getThrottleLimitationStatus() == 3 ) {
+       tfp_sprintf(warningText, "ALTI_SANITY");
+       *displayAttr = DISPLAYPORT_ATTR_WARNING;
+       *blinking = true;;
+    }
+    if ( getThrottleLimitationStatus() == 4 ) {
+       tfp_sprintf(warningText, "ALTI_BUFFER");
+       *displayAttr = DISPLAYPORT_ATTR_WARNING;
+       *blinking = true;;
+    }
+    if ( getThrottleLimitationStatus() == 5 ) {
+       tfp_sprintf(warningText, "ALTI_SETUP");
+       *displayAttr = DISPLAYPORT_ATTR_WARNING;
+       *blinking = true;;
+    }
+
+
 
 }
 
