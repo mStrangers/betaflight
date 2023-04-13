@@ -403,6 +403,7 @@ static float applyThrottleLimit(float throttle)
 }
 
 //Alti-Llimit
+#ifdef USE_ALTILIMIT
 static float applyAltiLimit(float throttle)
 {
     //do sanity check
@@ -434,6 +435,7 @@ uint8_t getThrottleLimitationStatus(void)
 {
     return alt_limit_status;
 }
+#endif
 
 static void applyMotorStop(void)
 {
@@ -573,7 +575,8 @@ FAST_CODE_NOINLINE void mixTable(timeUs_t currentTimeUs)
     }
 #endif
 
-    //Alti_Limit code here call function static float applyAltiLimit(float throttle) need to be created outside of the noinline fuction to test
+    //Alti_Limit code here call function static float applyAltiLimit(float throttle) need to be created outside of the noinline function to test
+#ifdef USE_ALTILIMIT
     if (mixerConfig()->alt_cutoff_lim > 0) {
         throttle = applyAltiLimit(throttle);
     } else {
@@ -582,6 +585,7 @@ FAST_CODE_NOINLINE void mixTable(timeUs_t currentTimeUs)
     
     // send throttle value to blackbox, including scaling and throttle boost, but not TL compensation, dyn idle or airmode 
     mixerThrottle = throttle;
+#endif
 
 #ifdef USE_DYN_IDLE
     // Set min throttle offset of 1% when stick is at zero and dynamic idle is active
