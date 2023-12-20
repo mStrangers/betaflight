@@ -344,7 +344,7 @@ void renderOsdWarning(char *warningText, bool *blinking, uint8_t *displayAttr)
     }
     
     //show altitude limit state
-    if ( getThrottleLimitationStatus() == 0 ) {
+    if ( (getThrottleLimitationStatus() == 0) && !(ARMING_FLAG(ARMED) || ARMING_FLAG(WAS_EVER_ARMED))) {
         tfp_sprintf(warningText, "ALTI_DISABLE");
         *displayAttr = DISPLAYPORT_ATTR_WARNING;
         *blinking = true;;
