@@ -54,7 +54,6 @@
 #include "flight/position.h" //Alti_Limit : needed by getEstimatedAltitudeCm
 #include "flight/rpm_filter.h"
 
-#include "io/gps.h" //Alti_Limit : needed by gpsIsHealthy and gpsSol
 
 #include "pg/rx.h"
 
@@ -407,24 +406,20 @@ static float applyThrottleLimit(float throttle)
 static float applyAltiLimit(float throttle)
 {
     //do sanity check
-    if ( ( gpsIsHealthy() && ( gpsSol.numSat >= gpsRescueConfig()->minSats ) ) || isBaroReady() ) {
+    if ( isBaroReady() ) {
         //do config check
-        if ( gpsRescueConfig()->initialAltitudeM <= mixerConfig()->alt_cutoff_lim){
-            //Over limit 
-            if ( getEstimatedAltitudeCm() > ( mixerConfig()->alt_cutoff_lim*100 ) ) {
-                throttle = 0.0f;
-                alt_limit_status = ALT_LIMIT_LIMIT;
-            } else if ( getEstimatedAltitudeCm() > ( ( mixerConfig()->alt_cutoff_lim*100 ) - ( mixerConfig()->alt_buffer_lim*100 ) ) ) { //inside buffer
-                float limitingRatio = 0.4f * ( (mixerConfig()->alt_cutoff_lim*100 ) - getEstimatedAltitudeCm() ) / ( mixerConfig()->alt_buffer_lim*100 );
-                limitingRatio = constrainf( limitingRatio, 0.0f, throttle );
-                throttle = constrainf(limitingRatio , 0.0f, throttle );
-                alt_limit_status = ALT_LIMIT_BUFFER;
-            } else {
-                alt_limit_status = ALT_LIMIT_ENABLE ; 
-            } 
+        //Over limit 
+        if ( getEstimatedAltitudeCm() > ( mixerConfig()->alt_cutoff_lim*100 ) ) {
+            throttle = 0.0f;
+            alt_limit_status = ALT_LIMIT_LIMIT;
+        } else if ( getEstimatedAltitudeCm() > ( ( mixerConfig()->alt_cutoff_lim*100 ) - ( mixerConfig()->alt_buffer_lim*100 ) ) ) { //inside buffer
+            float limitingRatio = 0.4f * ( (mixerConfig()->alt_cutoff_lim*100 ) - getEstimatedAltitudeCm() ) / ( mixerConfig()->alt_buffer_lim*100 );
+            limitingRatio = constrainf( limitingRatio, 0.0f, throttle );
+            throttle = constrainf(limitingRatio , 0.0f, throttle );
+            alt_limit_status = ALT_LIMIT_BUFFER;
         } else {
-            alt_limit_status = ALT_LIMIT_SETUP ;
-        }
+            alt_limit_status = ALT_LIMIT_ENABLE ; 
+        } 
     } else {
         alt_limit_status = ALT_LIMIT_SANITY;
     }
@@ -577,7 +572,7 @@ FAST_CODE_NOINLINE void mixTable(timeUs_t currentTimeUs)
 
     //Alti_Limit code here call function static float applyAltiLimit(float throttle) need to be created outside of the noinline function to test
 #ifdef USE_ALTILIMIT
-    if (mixerConfig()->alt_cutoff_lim > 0) {
+    if ((mixerConfig()->alt_cutoff_lim > 0) && !FLIGHT_MODE(GPS_RESCUE_MODE)) {
         throttle = applyAltiLimit(throttle);
     } else {
         alt_limit_status = ALT_LIMIT_DISABLE ; 
