@@ -38,6 +38,7 @@
 #include "drivers/motor.h"
 #include "drivers/time.h"
 
+
 #include "fc/controlrate_profile.h"
 #include "fc/core.h"
 #include "fc/rc.h"
@@ -51,6 +52,7 @@
 #include "flight/mixer_init.h"
 #include "flight/mixer_tricopter.h"
 #include "flight/pid.h"
+#include "flight/position.h" //Alti_Limit : needed by getEstimatedAltitudeCm
 #include "flight/rpm_filter.h"
 
 #include "pg/rx.h"
@@ -58,9 +60,12 @@
 #include "rx/rx.h"
 
 #include "sensors/battery.h"
+#include "sensors/barometer.h" //Alti_Limit : needed by isBaroReady
 #include "sensors/gyro.h"
 
 #include "mixer.h"
+
+
 
 #define DYN_LPF_THROTTLE_STEPS           100
 #define DYN_LPF_THROTTLE_UPDATE_DELAY_US 5000 // minimum of 5ms between updates
@@ -71,6 +76,10 @@ float FAST_DATA_ZERO_INIT motor[MAX_SUPPORTED_MOTORS];
 float motor_disarmed[MAX_SUPPORTED_MOTORS];
 
 static FAST_DATA_ZERO_INIT int throttleAngleCorrection;
+
+#ifdef USE_ALTILIMIT
+static uint8_t alt_limit_status = ALT_LIMIT_DISABLE ; //Alti_Limit
+#endif
 
 float getMotorMixRange(void)
 {
@@ -440,6 +449,37 @@ static float applyThrottleLimit(float throttle)
     return throttle;
 }
 
+//Alti-Llimit
+#ifdef USE_ALTILIMIT
+static float applyAltiLimit(float throttle)
+{
+    //do sanity check
+    if ( isBaroReady() ) {
+        
+        //Over limit 
+        if ( getEstimatedAltitudeCm() > ( mixerConfig()->alt_cutoff_lim*100 ) ) {
+            throttle = 0.0f;
+            alt_limit_status = ALT_LIMIT_LIMIT;
+        } else if ( getEstimatedAltitudeCm() > ( ( mixerConfig()->alt_cutoff_lim*100 ) - ( mixerConfig()->alt_buffer_lim*100 ) ) ) { //inside buffer
+            float limitingRatio = 0.4f * ( (mixerConfig()->alt_cutoff_lim*100 ) - getEstimatedAltitudeCm() ) / ( mixerConfig()->alt_buffer_lim*100 );
+            limitingRatio = constrainf( limitingRatio, 0.0f, throttle );
+            throttle = constrainf(limitingRatio , 0.0f, throttle );
+            alt_limit_status = ALT_LIMIT_BUFFER;
+        } else {
+            alt_limit_status = ALT_LIMIT_ENABLE ; 
+        } 
+    } else {
+        alt_limit_status = ALT_LIMIT_SANITY;
+    }
+    return throttle;
+}
+
+uint8_t getThrottleLimitationStatus(void)
+{
+    return alt_limit_status;
+}
+#endif
+
 static void applyMotorStop(void)
 {
     for (int i = 0; i < mixerRuntime.motorCount; i++) {
@@ -650,6 +690,15 @@ FAST_CODE_NOINLINE void mixTable(timeUs_t currentTimeUs)
         const float throttleHpf = throttle - pt1FilterApply(&throttleLpf, throttle);
         throttle = constrainf(throttle + throttleBoost * throttleHpf, 0.0f, 1.0f);
     }
+#endif
+
+    //Alti_Limit code here call function static float applyAltiLimit(float throttle) need to be created outside of the noinline function to test
+#ifdef USE_ALTILIMIT
+    if ((mixerConfig()->alt_cutoff_lim > 0) && !FLIGHT_MODE(GPS_RESCUE_MODE)) {
+        throttle = applyAltiLimit(throttle);
+    } else {
+        alt_limit_status = ALT_LIMIT_DISABLE ; 
+    } 
 #endif
 
     // send throttle value to blackbox, including scaling and throttle boost, but not TL compensation, dyn idle or airmode

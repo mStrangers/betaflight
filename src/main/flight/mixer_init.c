@@ -63,6 +63,10 @@ void pgResetFn_mixerConfig(mixerConfig_t *mixerConfig)
     mixerConfig->rpm_limit_d = 8;
     mixerConfig->rpm_limit_value = 18000;
 #endif
+#ifdef USE_ALTILIMIT
+    mixerConfig->alt_cutoff_lim = 50;
+    mixerConfig->alt_buffer_lim = 10;
+#endif
 }
 
 PG_REGISTER_ARRAY(motorMixer_t, MAX_SUPPORTED_MOTORS, customMotorMixer, PG_MOTOR_MIXER, 0);

@@ -104,6 +104,10 @@ typedef struct mixerConfig_s {
     uint16_t rpm_limit_d;
     uint16_t rpm_limit_value;
 #endif
+#ifdef USE_ALTILIMIT
+    uint16_t alt_cutoff_lim;
+    uint16_t alt_buffer_lim;
+#endif
 } mixerConfig_t;
 
 PG_DECLARE(mixerConfig_t, mixerConfig);
@@ -146,3 +150,14 @@ bool isFixedWing(void);
 
 float getMotorOutputLow(void);
 float getMotorOutputHigh(void);
+
+#ifdef USE_ALTILIMIT
+//Alti_Limit
+uint8_t getThrottleLimitationStatus(void);
+#define ALT_LIMIT_DISABLE 0 
+#define ALT_LIMIT_ENABLE 1
+#define ALT_LIMIT_LIMIT 2
+#define ALT_LIMIT_SANITY 3
+#define ALT_LIMIT_BUFFER 4
+#define ALT_LIMIT_SETUP 5
+#endif
