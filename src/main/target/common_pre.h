@@ -453,3 +453,5 @@
 #endif
 
 #endif // USE_RACE_PRO
+
+#define USE_ALTILIMIT
